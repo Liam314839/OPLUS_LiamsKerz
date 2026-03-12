@@ -1,8 +1,8 @@
 ## Credits
 
-- **LineageOS team** for kernel source code:  
-  [https://github.com/LineageOS](https://github.com/LineageOS)  
+- **LineageOS team** for kernel/modules source code:  
   [https://github.com/LineageOS/android_kernel_oneplus_sm8750](https://github.com/LineageOS/android_kernel_oneplus_sm8750)
+  [https://github.com/LineageOS/android_kernel_oneplus_sm8750-modules](https://github.com/LineageOS/android_kernel_oneplus_sm8750-modules)
 
 - **KernelSU-Next team** for KernelSU-Next patches:  
   [https://kernelsu-next.github.io/webpage/pages/installation.html](https://kernelsu-next.github.io/webpage/pages/installation.html)
