@@ -1,4 +1,4 @@
-name: Build LineageOS kernel for OnePlus 13 with KernelSU-Next support
+name: Build LineageOS kernel for OnePlus 13 with KernelSU-Next and SUSFS support
 
 on:
   workflow_dispatch:
@@ -53,6 +53,9 @@ jobs:
         cd $GITHUB_WORKSPACE/kernel_workspace
         git clone --recursive https://github.com/LineageOS/android_kernel_oneplus_sm8750-modules -b lineage-23.2 sm8750-modules --depth=1
         sed -i '$a CONFIG_DODGE_DTB=y' $GITHUB_WORKSPACE/kernel_workspace/android-kernel/arch/arm64/configs/vendor/oplus/sun_perf.config
+        sed -i '$a CONFIG_KSU=y' $GITHUB_WORKSPACE/kernel_workspace/android-kernel/arch/arm64/configs/vendor/oplus/sun_perf.config
+        sed -i '$a CONFIG_KSU_SUSFS=y' $GITHUB_WORKSPACE/kernel_workspace/android-kernel/arch/arm64/configs/vendor/oplus/sun_perf.config
+
 
     - name: Setup official KernelSU-Next
       run: |
@@ -60,7 +63,37 @@ jobs:
         curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s main
         KSU_VERSION=$(cd KernelSU && expr $(/usr/bin/git rev-list --count HEAD) + 20000)
         echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-      
+
+    - name: Setup susfs4ksu
+      run: |
+        cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+        echo "Cloning susfs4ksu..."
+        git clone --depth=1 -b gki-android15-6.6 https://gitlab.com/simonpunk/susfs4ksu.git
+        echo "Copying patch files..."
+        cp susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch KernelSU-Next/
+        cp susfs4ksu/kernel_patches/50_add_susfs_in_kernel-*.patch 50_add_susfs_in_kernel.patch
+        echo "Copying SUSFS source files..."
+        cp susfs4ksu/kernel_patches/fs/* fs/
+        cp susfs4ksu/kernel_patches/include/linux/* include/linux/
+        echo "Applying KernelSU patch..."
+        cd KernelSU-Next
+        patch -p1 < 10_enable_susfs_for_ksu.patch
+        echo "Applying kernel patch..."
+        cd ..
+        patch -p1 < 50_add_susfs_in_kernel.patch  
+
+    - name: Apply Wild Kernels patches
+      run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          echo "Cloning wildpatches..."
+          git clone https://github.com/Liam31489/wildpatches
+          echo "Applying Wild Kernels patches..."
+          for patch in wildpatches/*.patch; do
+            echo "Applying $patch"
+            patch -p1 < "$patch"
+          done
+
+          echo "Wild Kernels patches applied successfully"
     - name: Build kernel
       run: |
         cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
